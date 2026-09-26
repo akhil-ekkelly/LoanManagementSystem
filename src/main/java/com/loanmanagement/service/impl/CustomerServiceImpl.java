@@ -4,9 +4,12 @@ import com.loanmanagement.dao.CustomerDao;
 import com.loanmanagement.dao.impl.CustomerDaoImpl;
 import com.loanmanagement.model.Customer;
 import com.loanmanagement.service.CustomerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CustomerServiceImpl implements CustomerService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CustomerServiceImpl.class);
     private final CustomerDao customerDao;
 
     public CustomerServiceImpl() {
@@ -15,10 +18,11 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public void addCustomer(Customer customer) {
-        if (validateCustomerFormat(customer)) {
+        if (customer != null && customer.getUserId() > 0) {
             customerDao.addCustomer(customer);
+            logger.info("Service: Processed customer profile creation for userId={}", customer.getUserId());
         } else {
-            System.out.println("Validation failed: Cannot add customer due to invalid email or phone format.");
+            logger.warn("Service Validation failed: Invalid customer data.");
         }
     }
 
@@ -27,15 +31,17 @@ public class CustomerServiceImpl implements CustomerService {
         if (customerId > 0) {
             return customerDao.getCustomerById(customerId);
         }
+        logger.warn("Service Validation failed: Invalid customerId={}", customerId);
         return null;
     }
 
     @Override
     public void updateCustomer(Customer customer) {
-        if (validateCustomerFormat(customer)) {
+        if (customer != null && customer.getCustomerId() > 0) {
             customerDao.updateCustomer(customer);
+            logger.info("Service: Processed customer profile update for customerId={}", customer.getCustomerId());
         } else {
-            System.out.println("Validation failed: Cannot update customer due to invalid email or phone format.");
+            logger.warn("Service Validation failed: Invalid customer data for update.");
         }
     }
 
@@ -43,23 +49,9 @@ public class CustomerServiceImpl implements CustomerService {
     public void deleteCustomer(int customerId) {
         if (customerId > 0) {
             customerDao.deleteCustomer(customerId);
+            logger.info("Service: Processed customer profile deletion for customerId={}", customerId);
+        } else {
+            logger.warn("Service Validation failed: Invalid customerId={}", customerId);
         }
-    }
-
-    // Enforces BR-10: Email and phone number must pass format validation
-    private boolean validateCustomerFormat(Customer customer) {
-        // Standard email format check
-        if (customer.getEmail() == null || !customer.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            System.out.println("Invalid email format.");
-            return false;
-        }
-
-        // Phone must be exactly 10 digits starting with 6 to 9
-        if (customer.getPhone() == null || !customer.getPhone().matches("^[6-9]\\d{9}$")) {
-            System.out.println("Invalid phone format. Enter a valid 10-digit mobile number.");
-            return false;
-        }
-
-        return true;
     }
 }

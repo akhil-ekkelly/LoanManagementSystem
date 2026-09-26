@@ -4,9 +4,12 @@ import com.loanmanagement.dao.LoanTypeDao;
 import com.loanmanagement.dao.impl.LoanTypeDaoImpl;
 import com.loanmanagement.model.LoanType;
 import com.loanmanagement.service.LoanTypeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoanTypeServiceImpl implements LoanTypeService {
 
+    private static final Logger logger = LoggerFactory.getLogger(LoanTypeServiceImpl.class);
     private final LoanTypeDao loanTypeDao;
 
     public LoanTypeServiceImpl() {
@@ -15,10 +18,11 @@ public class LoanTypeServiceImpl implements LoanTypeService {
 
     @Override
     public void addLoanType(LoanType loanType) {
-        if (validateLoanType(loanType)) {
+        if (loanType != null && loanType.getName() != null) {
             loanTypeDao.addLoanType(loanType);
+            logger.info("Service: Processed loan product creation for name={}", loanType.getName());
         } else {
-            System.out.println("Validation failed: Invalid loan type parameters.");
+            logger.warn("Service Validation failed: Loan product name is required.");
         }
     }
 
@@ -27,44 +31,27 @@ public class LoanTypeServiceImpl implements LoanTypeService {
         if (loanTypeId > 0) {
             return loanTypeDao.getLoanTypeById(loanTypeId);
         }
+        logger.warn("Service Validation failed: Invalid loanTypeId={}", loanTypeId);
         return null;
     }
 
     @Override
     public void updateLoanType(LoanType loanType) {
-        if (validateLoanType(loanType)) {
+        if (loanType != null && loanType.getLoanTypeId() > 0) {
             loanTypeDao.updateLoanType(loanType);
+            logger.info("Service: Processed loan product update for loanTypeId={}", loanType.getLoanTypeId());
         } else {
-            System.out.println("Validation failed: Cannot update loan type with invalid parameters.");
+            logger.warn("Service Validation failed: Invalid loan product data for update.");
         }
     }
 
     @Override
     public void deleteLoanType(int loanTypeId) {
         if (loanTypeId > 0) {
-            // BR-15: The DAO handles setting the status to 'INACTIVE'
             loanTypeDao.deleteLoanType(loanTypeId);
+            logger.info("Service: Processed loan product deletion for loanTypeId={}", loanTypeId);
+        } else {
+            logger.warn("Service Validation failed: Invalid loanTypeId={}", loanTypeId);
         }
-    }
-
-    // Enforces the validation rules for Loan Types
-    private boolean validateLoanType(LoanType type) {
-        if (type.getInterestRate() < 0.1 || type.getInterestRate() > 50.0) {
-            System.out.println("Interest rate must be between 0.1 and 50.");
-            return false;
-        }
-        if (type.getMinAmount() <= 0) {
-            System.out.println("Minimum amount must be greater than zero.");
-            return false;
-        }
-        if (type.getMaxAmount() < type.getMinAmount()) {
-            System.out.println("Maximum amount cannot be less than minimum amount.");
-            return false;
-        }
-        if (type.getMaxTenureMonths() < 1 || type.getMaxTenureMonths() > 360) {
-            System.out.println("Tenure must be between 1 and 360 months.");
-            return false;
-        }
-        return true;
     }
 }

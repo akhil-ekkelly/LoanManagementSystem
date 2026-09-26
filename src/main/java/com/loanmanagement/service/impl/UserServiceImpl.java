@@ -5,29 +5,27 @@ import com.loanmanagement.dao.impl.UserDaoImpl;
 import com.loanmanagement.model.User;
 import com.loanmanagement.service.UserService;
 import com.loanmanagement.util.PasswordUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserServiceImpl implements UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UserDao userDao;
 
     public UserServiceImpl() {
         this.userDao = new UserDaoImpl();
     }
 
-    public UserServiceImpl(UserDao userDao) {
-        this.userDao = userDao;
-    }
-
     @Override
     public void addUser(User user) {
         if (user != null && user.getUsername() != null && user.getPassword() != null) {
-            // Hash the password before saving to the database
             String hashedPassword = PasswordUtil.hashPassword(user.getPassword());
             user.setPassword(hashedPassword);
-
             userDao.addUser(user);
+            logger.info("Service: Processed registration for username={}", user.getUsername());
         } else {
-            System.out.println("Validation failed: Username and Password are required.");
+            logger.warn("Service Validation failed: Username and Password are required.");
         }
     }
 
@@ -36,15 +34,17 @@ public class UserServiceImpl implements UserService {
         if (userId > 0) {
             return userDao.getUserById(userId);
         }
+        logger.warn("Service Validation failed: Invalid userId={}", userId);
         return null;
     }
 
     @Override
     public void updateUser(User user) {
         if (user != null && user.getUserId() > 0) {
-            // If the user object contains a raw password that needs updating, hash it.
-            // (In a real app, you'd check if the password was actually changed before rehashing).
             userDao.updateUser(user);
+            logger.info("Service: Processed update for userId={}", user.getUserId());
+        } else {
+            logger.warn("Service Validation failed: Invalid user data provided for update.");
         }
     }
 
@@ -52,6 +52,9 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(int userId) {
         if (userId > 0) {
             userDao.deleteUser(userId);
+            logger.info("Service: Processed deletion for userId={}", userId);
+        } else {
+            logger.warn("Service Validation failed: Invalid userId={}", userId);
         }
     }
 }

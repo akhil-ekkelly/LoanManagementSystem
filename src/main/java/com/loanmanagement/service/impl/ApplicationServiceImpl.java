@@ -10,8 +10,12 @@ import com.loanmanagement.model.Customer;
 import com.loanmanagement.model.LoanApplication;
 import com.loanmanagement.model.LoanType;
 import com.loanmanagement.service.ApplicationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ApplicationServiceImpl implements ApplicationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
 
     private final LoanApplicationDao applicationDao;
     private final CustomerDao customerDao;
@@ -25,37 +29,32 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public void addApplication(LoanApplication application) {
-        // BR-17: Customer KYC must be VERIFIED before applying
         Customer customer = customerDao.getCustomerById(application.getCustomerId());
         if (customer == null || !"VERIFIED".equals(customer.getKycStatus())) {
-            System.out.println("Validation failed: Your KYC is pending verification. You cannot apply yet (BR-17).");
+            logger.warn("Validation failed: KYC is pending verification for customerId={}", application.getCustomerId());
             return;
         }
 
-        // BR-1: Loan type must be ACTIVE
         LoanType loanType = loanTypeDao.getLoanTypeById(application.getLoanTypeId());
         if (loanType == null || !"ACTIVE".equals(loanType.getStatus())) {
-            System.out.println("Validation failed: This product is not available (BR-1).");
+            logger.warn("Validation failed: Loan product is not active for loanTypeId={}", application.getLoanTypeId());
             return;
         }
 
-        // Validate requested amount and tenure against product limits
         if (application.getRequestedAmount() < loanType.getMinAmount() ||
                 application.getRequestedAmount() > loanType.getMaxAmount()) {
-            System.out.println("Validation failed: Enter an amount between the product limits.");
+            logger.warn("Validation failed: Amount {} is outside product limits for customerId={}", application.getRequestedAmount(), application.getCustomerId());
             return;
         }
+
         if (application.getTenureMonths() < 1 || application.getTenureMonths() > loanType.getMaxTenureMonths()) {
-            System.out.println("Validation failed: Requested tenure exceeds maximum allowed.");
+            logger.warn("Validation failed: Requested tenure {} exceeds maximum for customerId={}", application.getTenureMonths(), application.getCustomerId());
             return;
         }
 
-        // BR-2: Every new application starts with PENDING
         application.setStatus("PENDING");
-
-        // Fixed: Calling the correct DAO method name
         applicationDao.addLoanApplication(application);
-        System.out.println("Loan application submitted successfully.");
+        logger.info("Service: Processed loan application submission for customerId={}", application.getCustomerId());
     }
 
     @Override
@@ -63,42 +62,40 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (applicationId > 0) {
             return applicationDao.getLoanApplicationById(applicationId);
         }
+        logger.warn("Service Validation failed: Invalid applicationId={}", applicationId);
         return null;
     }
 
     @Override
     public void updateApplication(LoanApplication application) {
-        // Fetch the existing application state to enforce status transitions
         LoanApplication existingApp = applicationDao.getLoanApplicationById(application.getApplicationId());
         if (existingApp == null) {
-            System.out.println("Validation failed: Application not found.");
+            logger.warn("Validation failed: Application not found for applicationId={}", application.getApplicationId());
             return;
         }
 
-        // BR-11: Only PENDING applications can be approved or rejected
         if (!"PENDING".equals(existingApp.getStatus()) && !existingApp.getStatus().equals(application.getStatus())) {
-            System.out.println("Validation failed: Only PENDING applications can be approved or rejected (BR-11).");
+            logger.warn("Validation failed: Only PENDING applications can be changed. applicationId={}", application.getApplicationId());
             return;
         }
 
-        // Validation Rule: Rejection remarks are mandatory
         if ("REJECTED".equals(application.getStatus()) &&
                 (application.getRemarks() == null || application.getRemarks().trim().isEmpty())) {
-            System.out.println("Validation failed: Enter the reason for rejecting this application.");
+            logger.warn("Validation failed: Rejection remarks are mandatory for applicationId={}", application.getApplicationId());
             return;
         }
 
-        // Fixed: Calling the correct DAO method name
         applicationDao.updateLoanApplication(application);
-        System.out.println("Application updated successfully.");
+        logger.info("Service: Processed application status update to {} for applicationId={}", application.getStatus(), application.getApplicationId());
     }
 
     @Override
     public void deleteApplication(int applicationId) {
         if (applicationId > 0) {
-            // Fixed: Calling the correct DAO method name
             applicationDao.deleteLoanApplication(applicationId);
-            System.out.println("Application deleted.");
+            logger.info("Service: Processed application deletion for applicationId={}", applicationId);
+        } else {
+            logger.warn("Service Validation failed: Invalid applicationId={}", applicationId);
         }
     }
 }
