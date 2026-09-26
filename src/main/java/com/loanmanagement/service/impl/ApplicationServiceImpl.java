@@ -17,9 +17,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
 
-    private final LoanApplicationDao applicationDao;
-    private final CustomerDao customerDao;
-    private final LoanTypeDao loanTypeDao;
+    private LoanApplicationDao applicationDao;
+    private CustomerDao customerDao;
+    private LoanTypeDao loanTypeDao;
 
     public ApplicationServiceImpl() {
         this.applicationDao = new LoanApplicationDaoImpl();

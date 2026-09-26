@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 public class LoanTypeServiceImpl implements LoanTypeService {
 
     private static final Logger logger = LoggerFactory.getLogger(LoanTypeServiceImpl.class);
-    private final LoanTypeDao loanTypeDao;
+    private LoanTypeDao loanTypeDao;
 
     public LoanTypeServiceImpl() {
         this.loanTypeDao = new LoanTypeDaoImpl();

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 public class CustomerServiceImpl implements CustomerService {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomerServiceImpl.class);
-    private final CustomerDao customerDao;
+    private CustomerDao customerDao;
 
     public CustomerServiceImpl() {
         this.customerDao = new CustomerDaoImpl();

@@ -17,9 +17,9 @@ public class LoanServiceImpl implements LoanService {
 
     private static final Logger logger = LoggerFactory.getLogger(LoanServiceImpl.class);
 
-    private final LoanDao loanDao;
-    private final LoanApplicationDao applicationDao;
-    private final LoanTypeDao loanTypeDao;
+    private LoanDao loanDao;
+    private LoanApplicationDao applicationDao;
+    private LoanTypeDao loanTypeDao;
 
     public LoanServiceImpl() {
         this.loanDao = new LoanDaoImpl();

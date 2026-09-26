@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class UserServiceImpl implements UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
-    private final UserDao userDao;
+    private UserDao userDao;
 
     public UserServiceImpl() {
         this.userDao = new UserDaoImpl();

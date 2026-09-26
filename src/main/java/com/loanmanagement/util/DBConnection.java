@@ -7,11 +7,17 @@ import java.sql.SQLException;
 public class DBConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/lms_db";
-    private static final String USER = "root";
-    private static final String PASSWORD = "root";
 
     public static Connection getConnection() throws SQLException {
+        // Fetch credentials from the system environment
+        String user = System.getenv("LMS_DB_USER");
+        String password = System.getenv("LMS_DB_PASSWORD");
 
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        // Fail fast if the variables are missing
+        if (user == null || password == null) {
+            throw new SQLException("Database credentials missing. Set LMS_DB_USER and LMS_DB_PASSWORD environment variables.");
+        }
+
+        return DriverManager.getConnection(URL, user, password);
     }
 }
