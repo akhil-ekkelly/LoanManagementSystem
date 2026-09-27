@@ -84,15 +84,15 @@ public class AppController {
             System.out.println("\n--- Customer Workflows ---");
             System.out.println("1. Create Profile (KYC)");
             System.out.println("2. Apply for a Loan");
-            System.out.println("7. View My Status (KYC)");
+            System.out.println("3. View My Status (KYC & Loans)");
 
             // Role-based menu rendering
             if (isAdminOrOfficer(user)) {
                 System.out.println("\n--- Admin / Officer Workflows ---");
-                System.out.println("3. Add New Master Loan Product");
-                System.out.println("4. Disburse Approved Application to Active Loan");
-                System.out.println("5. Verify Customer KYC");
-                System.out.println("6. Review Loan Application");
+                System.out.println("4. Add New Master Loan Product");
+                System.out.println("5. Disburse Approved Application to Active Loan");
+                System.out.println("6. Verify Customer KYC");
+                System.out.println("7. Review Loan Application");
             }
 
             System.out.println("\n0. Logout");
@@ -107,7 +107,7 @@ public class AppController {
             }
 
             // Block standard customers from entering admin option numbers
-            if (choice >= 3 && choice <= 6 && !isAdminOrOfficer(user)) {
+            if (choice >= 4 && choice <= 7 && !isAdminOrOfficer(user)) {
                 System.out.println("\n[ERROR] Access Denied. You do not have permission to perform this action.");
                 continue;
             }
@@ -120,19 +120,19 @@ public class AppController {
                     handleLoanApplication();
                     break;
                 case 3:
-                    handleAddLoanProduct();
+                    viewMyStatus(user);
                     break;
                 case 4:
-                    handleLoanDisbursement();
+                    handleAddLoanProduct();
                     break;
                 case 5:
-                    verifyCustomerKyc();
+                    handleLoanDisbursement();
                     break;
                 case 6:
-                    reviewLoanApplication(user);
+                    verifyCustomerKyc();
                     break;
                 case 7:
-                    viewMyStatus(user);
+                    reviewLoanApplication(user);
                     break;
                 case 0:
                     loggedIn = false;
@@ -266,16 +266,11 @@ public class AppController {
             System.out.print("Enter Tenure (in months): ");
             int tenure = Integer.parseInt(scanner.nextLine().trim());
 
-            System.out.print("Enter Purpose of Loan: ");
-            // Purpose isn't in standard LoanApplication models always, so adjust if your model lacks setPurpose
-            String purpose = scanner.nextLine().trim();
-
             LoanApplication app = new LoanApplication();
             app.setCustomerId(customerId);
             app.setLoanTypeId(loanTypeId);
             app.setRequestedAmount(amount);
             app.setTenureMonths(tenure);
-            // app.setPurpose(purpose); // Uncomment if your model has this
 
             applicationService.addApplication(app);
             System.out.println("[INFO] Application request sent. Check logs for validation result.");
@@ -411,7 +406,7 @@ public class AppController {
     private static void viewMyStatus(User user) {
         System.out.println("\n--- My Account Status ---");
         try {
-            System.out.print("Confirm your Customer ID to view status: ");
+            System.out.print("Enter your Customer ID to view status: ");
             int customerId = Integer.parseInt(scanner.nextLine().trim());
 
             Customer customer = customerService.getCustomerById(customerId);
@@ -426,18 +421,65 @@ public class AppController {
                 return;
             }
 
-            System.out.println("\n--- KYC Details ---");
+            System.out.println("\n--- Profile Details ---");
+            System.out.println("User ID: " + customer.getUserId());
+            System.out.println("Customer ID: " + customer.getCustomerId());
             System.out.println("Name: " + customer.getFullName());
             System.out.println("KYC Status: " + customer.getKycStatus());
             System.out.println("Credit Score: " + customer.getCreditScore());
 
-            System.out.println("\n[INFO] Check with a Loan Officer for specific application status during this demo.");
+            // 1. Application Check
+            System.out.print("\nWould you like to check a specific Loan Application status? (Y/N): ");
+            String checkApp = scanner.nextLine().trim().toUpperCase();
+
+            if ("Y".equals(checkApp)) {
+                System.out.print("Enter Application ID: ");
+                int appId = Integer.parseInt(scanner.nextLine().trim());
+
+                LoanApplication app = applicationService.getApplicationById(appId);
+
+                if (app == null) {
+                    System.out.println("[ERROR] Application not found.");
+                } else if (app.getCustomerId() != customerId) {
+                    System.out.println("[ERROR] This application does not belong to your profile.");
+                } else {
+                    System.out.println("\n--- Loan Application Details ---");
+                    System.out.println("Application ID: " + app.getApplicationId());
+                    System.out.println("Requested Amount: " + app.getRequestedAmount());
+                    System.out.println("Status: " + app.getStatus());
+                    System.out.println("Remarks: " + (app.getRemarks() != null ? app.getRemarks() : "Pending Officer Review"));
+                }
+            }
+
+            // 2. Disbursed Loan Check
+            System.out.print("\nWould you like to check an Active Disbursed Loan? (Y/N): ");
+            String checkLoan = scanner.nextLine().trim().toUpperCase();
+
+            if ("Y".equals(checkLoan)) {
+                System.out.print("Enter Loan ID: ");
+                int loanId = Integer.parseInt(scanner.nextLine().trim());
+
+                // Uses the existing loanService that is already initialized at the top of AppController
+                Loan loan = loanService.getLoanById(loanId);
+
+                if (loan == null) {
+                    System.out.println("[ERROR] Loan not found or not yet disbursed.");
+                } else if (loan.getCustomerId() != customerId) {
+                    System.out.println("[ERROR] This loan does not belong to your profile.");
+                } else {
+                    System.out.println("\n--- Active Loan Details ---");
+                    System.out.println("Loan ID: " + loanId);
+                    System.out.println("Originated from Application ID: " + loan.getApplicationId());
+                    System.out.println("Principal Amount: " + loan.getPrincipalAmount());
+                    System.out.println("Tenure: " + loan.getTenureMonths() + " months");
+                    System.out.println("Status: ACTIVE");
+                }
+            }
 
         } catch (NumberFormatException e) {
-            System.out.println("[ERROR] Invalid input.");
+            System.out.println("[ERROR] Invalid input. Please enter numbers only.");
         }
     }
-
     // --- HELPER METHODS ---
 
     private static boolean isAdminOrOfficer(User user) {
