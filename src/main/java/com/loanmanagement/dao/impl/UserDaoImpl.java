@@ -101,4 +101,28 @@ public class UserDaoImpl implements UserDao {
             logger.error("Database error while deleting user: userId={}", userId, e);
         }
     }
+
+    @Override
+    public User getUserByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+        try (java.sql.Connection conn = com.loanmanagement.util.DBConnection.getConnection();
+             java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setUserId(rs.getInt("user_id"));
+                    user.setUsername(rs.getString("username"));
+                    // Removed the password mapping line to prevent the column mismatch crash!
+                    user.setRole(rs.getString("role"));
+                    return user;
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+        }
+        return null;
+    }
+
 }

@@ -13,4 +13,6 @@ public interface UserDao {
 
         void deleteUser(int userId);
 
+        User getUserByUsername(String username);
+
 }

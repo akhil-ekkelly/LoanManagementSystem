@@ -156,19 +156,14 @@ public class AppController {
         boolean isAuthenticated = authService.login(username, password);
 
         if (isAuthenticated) {
-            try {
-                System.out.print("[SUCCESS] Authenticated. Enter your User ID to load profile: ");
-                int userId = Integer.parseInt(scanner.nextLine().trim());
-                User user = userService.getUserById(userId);
+            // AUTOMATIC FETCH: No more prompting for User ID!
+            User user = userService.getUserByUsername(username);
 
-                if (user != null) {
-                    return user;
-                } else {
-                    System.out.println("[ERROR] User profile not found.");
-                    return null;
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("[ERROR] Invalid User ID format.");
+            if (user != null) {
+                System.out.println("[SUCCESS] Login successful!");
+                return user;
+            } else {
+                System.out.println("[ERROR] User profile not found.");
                 return null;
             }
         } else {

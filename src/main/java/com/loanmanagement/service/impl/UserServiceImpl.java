@@ -57,4 +57,10 @@ public class UserServiceImpl implements UserService {
             logger.warn("Service Validation failed: Invalid userId={}", userId);
         }
     }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return userDao.getUserByUsername(username);
+    }
+
 }
