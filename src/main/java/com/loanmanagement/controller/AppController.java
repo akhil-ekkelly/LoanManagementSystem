@@ -126,7 +126,7 @@ public class AppController {
                     handleAddLoanProduct();
                     break;
                 case 5:
-                    handleLoanDisbursement();
+                    handleLoanDisbursement(user);
                     break;
                 case 6:
                     verifyCustomerKyc();
@@ -310,7 +310,7 @@ public class AppController {
         }
     }
 
-    private static void handleLoanDisbursement() {
+    private static void handleLoanDisbursement(User user) {
         System.out.println("\n--- Disburse Approved Application ---");
         try {
             System.out.print("Enter Approved Application ID: ");
@@ -332,6 +332,13 @@ public class AppController {
             loan.setLoanTypeId(app.getLoanTypeId());
             loan.setPrincipalAmount(app.getRequestedAmount());
             loan.setTenureMonths(app.getTenureMonths());
+
+            // --- NEW LINE: Fulfills the database foreign key constraint ---
+            loan.setCreatedBy(user.getUserId());
+
+            // --- NEW LINES: Fulfill remaining database constraints ---
+            loan.setStartDate(java.time.LocalDate.now().toString());
+            loan.setStatus("ACTIVE");
 
             loanService.addLoan(loan);
             System.out.println("[INFO] Disbursement request sent. Check logs for calculations and confirmation.");

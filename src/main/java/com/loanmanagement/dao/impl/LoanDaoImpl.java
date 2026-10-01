@@ -34,6 +34,16 @@ public class LoanDaoImpl implements LoanDao {
             stmt.setDouble(10, loan.getOutstandingAmount());
             stmt.setInt(11, loan.getCreatedBy());
 
+
+            // --- DIAGNOSTIC PRINTS ---
+            System.out.println("\n[DEBUG] --- ATTEMPTING TO SAVE LOAN ---");
+            System.out.println("[DEBUG] Loan Application ID: " + loan.getApplicationId());
+            System.out.println("[DEBUG] Loan Customer ID: " + loan.getCustomerId());
+            System.out.println("[DEBUG] Loan Created By (User ID): " + loan.getCreatedBy());
+            System.out.println("[DEBUG] ---------------------------------\n");
+
+
+
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
